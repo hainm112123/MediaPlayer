@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.mediaplayer"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.mediaplayer"
