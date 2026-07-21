@@ -2,14 +2,20 @@ package com.example.mediaplayer.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.VideoFile
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.mediaplayer.data.MediaFile
+import com.example.mediaplayer.data.MediaType
 
 @Composable
 fun MediaItemRow(file: MediaFile, onClick: () -> Unit) {
@@ -18,6 +24,12 @@ fun MediaItemRow(file: MediaFile, onClick: () -> Unit) {
         file.album?.let { append(" • $it") }
         file.year?.let { append(" • $it") }
         append(" • ${formatSize(file.size)}")
+    }
+
+    val fallbackIcon = if (file.type == MediaType.AUDIO) {
+        Icons.Default.MusicNote
+    } else {
+        Icons.Default.VideoFile
     }
 
     ListItem(
@@ -29,7 +41,9 @@ fun MediaItemRow(file: MediaFile, onClick: () -> Unit) {
                 model = file.uri,
                 contentDescription = null,
                 modifier = Modifier.size(50.dp),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                placeholder = rememberVectorPainter(fallbackIcon),
+                error = rememberVectorPainter(fallbackIcon)
             )
         },
         modifier = Modifier.clickable { onClick() }

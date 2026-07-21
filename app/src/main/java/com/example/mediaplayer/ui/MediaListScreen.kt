@@ -37,26 +37,27 @@ fun MediaListScreen(
             placeholder = { Text("Search...") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             trailingIcon = {
-                IconButton(onClick = { showSortMenu = true }) {
-                    Icon(Icons.Default.Sort, contentDescription = "Sort")
+                Box {
+                    IconButton(onClick = { showSortMenu = true }) {
+                        Icon(Icons.Default.Sort, contentDescription = "Sort")
+                    }
+                    DropdownMenu(
+                        expanded = showSortMenu,
+                        onDismissRequest = { showSortMenu = false }
+                    ) {
+                        SortType.entries.forEach { type ->
+                            DropdownMenuItem(
+                                text = { Text(type.name) },
+                                onClick = {
+                                    viewModel.setSortType(type)
+                                    showSortMenu = false
+                                }
+                            )
+                        }
+                    }
                 }
             }
         )
-
-        DropdownMenu(
-            expanded = showSortMenu,
-            onDismissRequest = { showSortMenu = false }
-        ) {
-            SortType.entries.forEach { type ->
-                DropdownMenuItem(
-                    text = { Text(type.name) },
-                    onClick = {
-                        viewModel.setSortType(type)
-                        showSortMenu = false
-                    }
-                )
-            }
-        }
 
         TabRow(selectedTabIndex = selectedTab) {
             tabs.forEachIndexed { index, title ->
