@@ -122,8 +122,8 @@ fun MainScreen() {
                 composable("home") {
                     HomeScreen(
                         viewModel = viewModel,
-                        onMediaClick = { mediaFile ->
-                            viewModel.playMedia(mediaFile)
+                        onMediaClick = { mediaFile, playlist ->
+                            viewModel.playMedia(mediaFile, playlist)
                             navController.navigate("player")
                         }
                     )
@@ -131,8 +131,8 @@ fun MainScreen() {
                 composable("list") {
                     MediaListScreen(
                         viewModel = viewModel,
-                        onMediaClick = { mediaFile ->
-                            viewModel.playMedia(mediaFile)
+                        onMediaClick = { mediaFile, playlist ->
+                            viewModel.playMedia(mediaFile, playlist)
                             navController.navigate("player")
                         }
                     )

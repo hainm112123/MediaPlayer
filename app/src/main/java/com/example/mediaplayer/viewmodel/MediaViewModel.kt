@@ -14,6 +14,10 @@ enum class SortType {
     NAME, SIZE, DATE, DURATION, ARTIST, ALBUM
 }
 
+enum class SortOrder {
+    ASCENDING, DESCENDING
+}
+
 class MediaViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = MediaStoreRepository(application.contentResolver)
@@ -29,12 +33,15 @@ class MediaViewModel(application: Application) : AndroidViewModel(application) {
     private val _sortType = MutableStateFlow(SortType.NAME)
     val sortType: StateFlow<SortType> = _sortType
 
-    val filteredAudioFiles = combine(_audioFiles, _searchQuery, _sortType) { files, query, sort ->
-        filterAndSort(files, query, sort)
+    private val _sortOrder = MutableStateFlow(SortOrder.ASCENDING)
+    val sortOrder: StateFlow<SortOrder> = _sortOrder
+
+    val filteredAudioFiles = combine(_audioFiles, _searchQuery, _sortType, _sortOrder) { files, query, sort, order ->
+        filterAndSort(files, query, sort, order)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val filteredVideoFiles = combine(_videoFiles, _searchQuery, _sortType) { files, query, sort ->
-        filterAndSort(files, query, sort)
+    val filteredVideoFiles = combine(_videoFiles, _searchQuery, _sortType, _sortOrder) { files, query, sort, order ->
+        filterAndSort(files, query, sort, order)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val recentMediaFiles = combine(recentDao.getRecentMedia(), _audioFiles, _videoFiles) { recentList, audios, videos ->
@@ -44,11 +51,15 @@ class MediaViewModel(application: Application) : AndroidViewModel(application) {
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    private val _repeatMode = MutableStateFlow(Player.REPEAT_MODE_OFF)
+    val repeatMode: StateFlow<Int> = _repeatMode
+
     private val _currentPlayerState = MutableStateFlow<Player?>(null)
     val currentPlayer: StateFlow<Player?> = _currentPlayerState
 
     val player: ExoPlayer by lazy {
         ExoPlayer.Builder(application).build().also {
+            it.repeatMode = _repeatMode.value
             _currentPlayerState.value = it
         }
     }
@@ -68,9 +79,32 @@ class MediaViewModel(application: Application) : AndroidViewModel(application) {
         _sortType.value = sortType
     }
 
-    fun playMedia(mediaFile: MediaFile) {
-        val mediaItem = MediaItem.fromUri(mediaFile.uri)
-        player.setMediaItem(mediaItem)
+    fun toggleSortOrder() {
+        _sortOrder.value = if (_sortOrder.value == SortOrder.ASCENDING) {
+            SortOrder.DESCENDING
+        } else {
+            SortOrder.ASCENDING
+        }
+    }
+
+    fun toggleRepeatMode() {
+        val nextMode = when (player.repeatMode) {
+            Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ONE
+            Player.REPEAT_MODE_ONE -> Player.REPEAT_MODE_ALL
+            else -> Player.REPEAT_MODE_OFF
+        }
+        player.repeatMode = nextMode
+        _repeatMode.value = nextMode
+    }
+
+    fun playMedia(mediaFile: MediaFile, playlist: List<MediaFile>) {
+        val mediaItems = playlist.map { MediaItem.fromUri(it.uri) }
+        val startIndex = playlist.indexOfFirst { it.id == mediaFile.id }
+        
+        player.setMediaItems(mediaItems)
+        if (startIndex != -1) {
+            player.seekTo(startIndex, 0L)
+        }
         player.prepare()
         player.play()
 
@@ -86,18 +120,21 @@ class MediaViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun filterAndSort(files: List<MediaFile>, query: String, sort: SortType): List<MediaFile> {
+    private fun filterAndSort(files: List<MediaFile>, query: String, sort: SortType, order: SortOrder): List<MediaFile> {
         val filtered = if (query.isBlank()) files else {
             files.filter { it.title.contains(query, ignoreCase = true) || it.artist?.contains(query, ignoreCase = true) == true }
         }
-        return when (sort) {
-            SortType.NAME -> filtered.sortedBy { it.title }
-            SortType.SIZE -> filtered.sortedByDescending { it.size }
-            SortType.DATE -> filtered.sortedByDescending { it.dateModified }
-            SortType.DURATION -> filtered.sortedByDescending { it.duration }
-            SortType.ARTIST -> filtered.sortedBy { it.artist ?: "" }
-            SortType.ALBUM -> filtered.sortedBy { it.album ?: "" }
+        
+        val sorted = when (sort) {
+            SortType.NAME -> filtered.sortedBy { it.title.lowercase() }
+            SortType.SIZE -> filtered.sortedBy { it.size }
+            SortType.DATE -> filtered.sortedBy { it.dateModified }
+            SortType.DURATION -> filtered.sortedBy { it.duration }
+            SortType.ARTIST -> filtered.sortedBy { (it.artist ?: "").lowercase() }
+            SortType.ALBUM -> filtered.sortedBy { (it.album ?: "").lowercase() }
         }
+
+        return if (order == SortOrder.DESCENDING) sorted.reversed() else sorted
     }
 
     override fun onCleared() {

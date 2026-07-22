@@ -16,7 +16,7 @@ import com.example.mediaplayer.viewmodel.MediaViewModel
 @Composable
 fun HomeScreen(
     viewModel: MediaViewModel,
-    onMediaClick: (MediaFile) -> Unit
+    onMediaClick: (MediaFile, List<MediaFile>) -> Unit
 ) {
     val recentMedia by viewModel.recentMediaFiles.collectAsState()
 
@@ -35,7 +35,7 @@ fun HomeScreen(
                     items = recentMedia,
                     key = { it.id }
                 ) { file ->
-                    MediaItemRow(file = file, onClick = { onMediaClick(file) })
+                    MediaItemRow(file = file, onClick = { onMediaClick(file, recentMedia) })
                 }
             }
         }
