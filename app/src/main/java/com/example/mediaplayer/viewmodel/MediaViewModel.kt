@@ -13,6 +13,8 @@ import com.example.mediaplayer.data.*
 import com.example.mediaplayer.service.PlaybackService
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -73,6 +75,11 @@ class MediaViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _player = MutableStateFlow<Player?>(null)
     val player: StateFlow<Player?> = _player
+
+    private val _sleepTimerRemainingMillis = MutableStateFlow<Long?>(null)
+    val sleepTimerRemainingMillis: StateFlow<Long?> = _sleepTimerRemainingMillis.asStateFlow()
+
+    private var sleepTimerJob: Job? = null
 
     private var controllerFuture: ListenableFuture<MediaController>? = null
 
@@ -140,6 +147,36 @@ class MediaViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             settingsRepository.setBackgroundPlayEnabled(enabled)
         }
+    }
+
+    fun startSleepTimer(minutes: Int) {
+        cancelSleepTimer()
+        if (minutes <= 0) return
+
+        val totalMillis = minutes * 60 * 1000L
+        _sleepTimerRemainingMillis.value = totalMillis
+
+        sleepTimerJob = viewModelScope.launch {
+            var remaining = totalMillis
+            val interval = 1000L
+            while (remaining > 0) {
+                delay(interval)
+                remaining -= interval
+                if (remaining <= 0) {
+                    _sleepTimerRemainingMillis.value = null
+                    _player.value?.pause()
+                    break
+                } else {
+                    _sleepTimerRemainingMillis.value = remaining
+                }
+            }
+        }
+    }
+
+    fun cancelSleepTimer() {
+        sleepTimerJob?.cancel()
+        sleepTimerJob = null
+        _sleepTimerRemainingMillis.value = null
     }
 
     fun createAlbum(name: String) {
