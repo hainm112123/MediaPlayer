@@ -159,8 +159,11 @@ in the service regardless of what is rendered:
   Playing") centered.
 - **Artwork**: a large rounded 1:1 card. The bytes come from
   `mediaMetadata.artworkData` — ExoPlayer automatically extracts embedded album art from
-  the file's tags during playback — rendered with Coil's `AsyncImage`. Files without
-  embedded art get a gradient placeholder with a `MusicNote` icon.
+  the file's tags during playback — rendered with Coil's `AsyncImage` using
+  `ContentScale.Crop` + center alignment, so the art is always center-cropped to fill the
+  entire square edge-to-edge regardless of the source aspect ratio (the square sizing and
+  rounded-corner clip are applied directly on the image). Files without embedded art get
+  a gradient placeholder with a `MusicNote` icon.
 - **Metadata**: title (bold, `basicMarquee()` scroll for long names) and artist (dimmed).
 - **Seek**: shared `SeekBarRow` (times + slider).
 - **Transport row**: shuffle — previous — large circular `FilledIconButton` play/pause

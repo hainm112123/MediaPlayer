@@ -21,12 +21,13 @@ import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -87,42 +88,39 @@ fun AudioPlayerContent(
 
         Spacer(Modifier.weight(1f))
 
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            shadowElevation = 8.dp,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-        ) {
-            val artworkData = mediaMetadata.artworkData
-            if (artworkData != null) {
-                AsyncImage(
-                    model = artworkData,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.linearGradient(
-                                listOf(
-                                    MaterialTheme.colorScheme.primaryContainer,
-                                    MaterialTheme.colorScheme.surfaceVariant
-                                )
-                            )
+        val artworkShape = RoundedCornerShape(20.dp)
+        val artworkModifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .shadow(8.dp, artworkShape)
+            .clip(artworkShape)
+        val artworkData = mediaMetadata.artworkData
+        if (artworkData != null) {
+            AsyncImage(
+                model = artworkData,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                alignment = Alignment.Center,
+                modifier = artworkModifier
+            )
+        } else {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = artworkModifier.background(
+                    Brush.linearGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.primaryContainer,
+                            MaterialTheme.colorScheme.surfaceVariant
                         )
-                ) {
-                    Icon(
-                        Icons.Default.MusicNote,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
-                        modifier = Modifier.size(96.dp)
                     )
-                }
+                )
+            ) {
+                Icon(
+                    Icons.Default.MusicNote,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
+                    modifier = Modifier.size(96.dp)
+                )
             }
         }
 
