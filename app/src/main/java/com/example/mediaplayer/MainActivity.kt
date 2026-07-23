@@ -181,7 +181,10 @@ fun MainScreen() {
                     SettingsScreen(viewModel = viewModel)
                 }
                 composable("player") {
-                    PlayerScreen(viewModel = viewModel)
+                    PlayerScreen(
+                        viewModel = viewModel,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
                 composable(
                     route = "album_detail/{albumId}",

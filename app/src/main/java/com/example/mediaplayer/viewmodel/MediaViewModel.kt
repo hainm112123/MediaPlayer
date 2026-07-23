@@ -190,6 +190,15 @@ class MediaViewModel(application: Application) : AndroidViewModel(application) {
                         .setTitle(file.title)
                         .setArtist(file.artist)
                         .setAlbumTitle(file.album)
+                        // Lets the player screen pick the video or audio layout
+                        // without re-querying the repository.
+                        .setMediaType(
+                            if (file.type == MediaType.AUDIO) {
+                                MediaMetadata.MEDIA_TYPE_MUSIC
+                            } else {
+                                MediaMetadata.MEDIA_TYPE_VIDEO
+                            }
+                        )
                         .build()
                 )
                 .build()

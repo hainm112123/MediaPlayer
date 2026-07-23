@@ -31,9 +31,18 @@ class PlaybackService : MediaSessionService() {
         }
     }
 
+    @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
-        val player = ExoPlayer.Builder(this).build()
+        val player = ExoPlayer.Builder(this)
+            // "Previous" on every surface (notification, lockscreen, headset/Bluetooth)
+            // always jumps to the previous media item instead of restarting the
+            // current one after 3 seconds of playback.
+            .setMaxSeekToPreviousPositionMs(Long.MAX_VALUE)
+            // Matches the double-tap gesture in the video player UI.
+            .setSeekBackIncrementMs(10_000)
+            .setSeekForwardIncrementMs(10_000)
+            .build()
         mediaSession = MediaSession.Builder(this, player)
             .setCallback(callback)
             .build()
