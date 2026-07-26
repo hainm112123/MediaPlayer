@@ -71,13 +71,18 @@ class MainActivity : ComponentActivity() {
             val player = viewModel.player.value
             if (player != null && player.isPlaying && 
                 player.mediaMetadata.mediaType == MediaMetadata.MEDIA_TYPE_VIDEO &&
-                currentRoute == "player") {
+                currentRoute == "player" &&
+                viewModel.isPipEnabled.value) {
                 val params = PictureInPictureParams.Builder()
-                    .setAspectRatio(Rational(16, 9))
+                    .setAspectRatio(rational())
                     .build()
                 enterPictureInPictureMode(params)
             }
         }
+    }
+
+    private fun rational(): Rational {
+        return Rational(16, 9)
     }
 
     override fun onPictureInPictureModeChanged(

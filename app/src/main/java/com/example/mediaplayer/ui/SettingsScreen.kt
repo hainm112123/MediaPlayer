@@ -61,6 +61,33 @@ fun SettingsScreen(viewModel: MediaViewModel) {
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
+        val isPipEnabled by viewModel.isPipEnabled.collectAsState()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Picture-in-Picture",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "Enable PiP when navigating home during video playback",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Switch(
+                checked = isPipEnabled,
+                onCheckedChange = { viewModel.togglePipMode(it) }
+            )
+        }
+
+        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()

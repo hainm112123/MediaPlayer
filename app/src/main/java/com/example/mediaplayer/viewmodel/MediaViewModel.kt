@@ -67,6 +67,9 @@ class MediaViewModel(application: Application) : AndroidViewModel(application) {
     val isBackgroundPlayEnabled = settingsRepository.isBackgroundPlayEnabled
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
+    val isPipEnabled = settingsRepository.isPipEnabled
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
     private val _repeatMode = MutableStateFlow(Player.REPEAT_MODE_OFF)
     val repeatMode: StateFlow<Int> = _repeatMode
 
@@ -146,6 +149,12 @@ class MediaViewModel(application: Application) : AndroidViewModel(application) {
     fun toggleBackgroundPlay(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.setBackgroundPlayEnabled(enabled)
+        }
+    }
+
+    fun togglePipMode(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setPipEnabled(enabled)
         }
     }
 
