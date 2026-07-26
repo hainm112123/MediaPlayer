@@ -1,15 +1,19 @@
 package com.example.mediaplayer
 
 import android.Manifest
+import android.app.PictureInPictureParams
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
+import android.util.Rational
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -36,14 +40,23 @@ import androidx.navigation.navArgument
 import com.example.mediaplayer.ui.*
 import com.example.mediaplayer.ui.theme.MediaPlayerTheme
 import com.example.mediaplayer.viewmodel.MediaViewModel
+import androidx.media3.common.MediaMetadata
 
 class MainActivity : ComponentActivity() {
+    private val viewModel: MediaViewModel by viewModels()
+    private var isInPipMode = mutableStateOf(false)
+    private var currentRoute: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             MediaPlayerTheme {
-                MainScreen()
+                MainScreen(
+                    viewModel = viewModel,
+                    isInPipMode = isInPipMode.value,
+                    onRouteChanged = { currentRoute = it }
+                )
             }
         }
     }
@@ -52,11 +65,36 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
     }
+
+    override fun onUserLeaveHint() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val player = viewModel.player.value
+            if (player != null && player.isPlaying && 
+                player.mediaMetadata.mediaType == MediaMetadata.MEDIA_TYPE_VIDEO &&
+                currentRoute == "player") {
+                val params = PictureInPictureParams.Builder()
+                    .setAspectRatio(Rational(16, 9))
+                    .build()
+                enterPictureInPictureMode(params)
+            }
+        }
+    }
+
+    override fun onPictureInPictureModeChanged(
+        isInPictureInPictureMode: Boolean,
+        newConfig: Configuration
+    ) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        isInPipMode.value = isInPictureInPictureMode
+    }
 }
 
 @Composable
-fun MainScreen() {
-    val viewModel: MediaViewModel = viewModel()
+fun MainScreen(
+    viewModel: MediaViewModel,
+    isInPipMode: Boolean,
+    onRouteChanged: (String?) -> Unit
+) {
     val navController = rememberNavController()
     var hasPermission by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -119,11 +157,15 @@ fun MainScreen() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
+    LaunchedEffect(currentDestination) {
+        onRouteChanged(currentDestination?.route)
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
             val showBottomBar = currentDestination?.route in listOf("home", "list", "settings")
-            if (hasPermission && showBottomBar) {
+            if (hasPermission && showBottomBar && !isInPipMode) {
                 NavigationBar {
                     NavigationBarItem(
                         selected = currentDestination?.route == "home",
@@ -210,7 +252,8 @@ fun MainScreen() {
                 composable("player") {
                     PlayerScreen(
                         viewModel = viewModel,
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.popBackStack() },
+                        isInPipMode = isInPipMode
                     )
                 }
                 composable(

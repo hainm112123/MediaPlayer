@@ -86,7 +86,8 @@ fun VideoPlayerContent(
     onToggleRepeat: () -> Unit,
     onToggleShuffle: () -> Unit,
     onOpenSpeed: () -> Unit,
-    onOpenQueue: () -> Unit
+    onOpenQueue: () -> Unit,
+    isInPipMode: Boolean = false
 ) {
     val view = LocalView.current
     val context = LocalContext.current
@@ -99,7 +100,11 @@ fun VideoPlayerContent(
     var interactionTick by remember { mutableIntStateOf(0) }
     val registerInteraction: () -> Unit = { interactionTick++ }
 
-    LaunchedEffect(controlsVisible, isPlaying, interactionTick) {
+    LaunchedEffect(controlsVisible, isPlaying, interactionTick, isInPipMode) {
+        if (isInPipMode) {
+            controlsVisible = false
+            return@LaunchedEffect
+        }
         if (controlsVisible && isPlaying) {
             delay(3500)
             controlsVisible = false
@@ -171,7 +176,8 @@ fun VideoPlayerContent(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .pointerInput(Unit) {
+                .pointerInput(isInPipMode) {
+                    if (isInPipMode) return@pointerInput
                     detectTapGestures(
                         onTap = { controlsVisible = !controlsVisible },
                         onDoubleTap = { offset ->
@@ -186,7 +192,8 @@ fun VideoPlayerContent(
                         }
                     )
                 }
-                .pointerInput(Unit) {
+                .pointerInput(isInPipMode) {
+                    if (isInPipMode) return@pointerInput
                     var isRightSide = false
                     var startVolume = 0f
                     var startBrightness = 0f
@@ -238,7 +245,7 @@ fun VideoPlayerContent(
         )
 
         AnimatedVisibility(
-            visible = controlsVisible,
+            visible = controlsVisible && !isInPipMode,
             enter = fadeIn(),
             exit = fadeOut()
         ) {
@@ -386,7 +393,7 @@ fun VideoPlayerContent(
             }
         }
 
-        if (seekFeedback != 0) {
+        if (seekFeedback != 0 && !isInPipMode) {
             Surface(
                 color = Color.Black.copy(alpha = 0.5f),
                 contentColor = Color.White,
@@ -409,7 +416,7 @@ fun VideoPlayerContent(
             }
         }
 
-        volumeFraction?.let { fraction ->
+        volumeFraction?.takeIf { !isInPipMode }?.let { fraction ->
             GestureValueIndicator(
                 icon = Icons.AutoMirrored.Filled.VolumeUp,
                 fraction = fraction,
@@ -418,7 +425,7 @@ fun VideoPlayerContent(
                     .padding(end = 32.dp)
             )
         }
-        brightnessFraction?.let { fraction ->
+        brightnessFraction?.takeIf { !isInPipMode }?.let { fraction ->
             GestureValueIndicator(
                 icon = Icons.Default.BrightnessMedium,
                 fraction = fraction,

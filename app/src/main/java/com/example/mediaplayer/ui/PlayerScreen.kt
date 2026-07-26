@@ -27,7 +27,11 @@ import com.example.mediaplayer.viewmodel.MediaViewModel
 import kotlinx.coroutines.delay
 
 @Composable
-fun PlayerScreen(viewModel: MediaViewModel, onBack: () -> Unit) {
+fun PlayerScreen(
+    viewModel: MediaViewModel,
+    onBack: () -> Unit,
+    isInPipMode: Boolean = false
+) {
     val player by viewModel.player.collectAsState()
     val repeatMode by viewModel.repeatMode.collectAsState()
     val shuffleModeEnabled by viewModel.shuffleModeEnabled.collectAsState()
@@ -116,7 +120,8 @@ fun PlayerScreen(viewModel: MediaViewModel, onBack: () -> Unit) {
             onToggleRepeat = viewModel::toggleRepeatMode,
             onToggleShuffle = viewModel::toggleShuffleMode,
             onOpenSpeed = { showSpeedSheet = true },
-            onOpenQueue = { showQueueSheet = true }
+            onOpenQueue = { showQueueSheet = true },
+            isInPipMode = isInPipMode
         )
     } else {
         AudioPlayerContent(
