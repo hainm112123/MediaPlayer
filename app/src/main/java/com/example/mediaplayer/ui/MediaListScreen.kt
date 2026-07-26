@@ -192,7 +192,5 @@ fun MediaListScreen(
         )
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.loadMedia()
-    }
+
 }

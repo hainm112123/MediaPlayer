@@ -106,6 +106,7 @@ class MediaViewModel(application: Application) : AndroidViewModel(application) {
                 })
             }
         }, MoreExecutors.directExecutor())
+        loadMedia()
     }
 
     fun loadMedia() {
