@@ -108,20 +108,6 @@ fun MainScreen(
     val isBackgroundPlayEnabled by viewModel.isBackgroundPlayEnabled.collectAsState()
     val player by viewModel.player.collectAsState()
 
-    LaunchedEffect(lifecycleOwner) {
-        lifecycleOwner.lifecycle.addObserver(LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                val intent = (context as? MainActivity)?.intent
-                if (intent?.getStringExtra("NAVIGATE_TO") == "player") {
-                    navController.navigate("player") {
-                        launchSingleTop = true
-                    }
-                    intent.removeExtra("NAVIGATE_TO")
-                }
-            }
-        })
-    }
-
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_STOP) {
@@ -164,6 +150,14 @@ fun MainScreen(
 
     LaunchedEffect(currentDestination) {
         onRouteChanged(currentDestination?.route)
+        
+        val intent = (context as? MainActivity)?.intent
+        if (intent?.getStringExtra("NAVIGATE_TO") == "player" && currentDestination != null) {
+            navController.navigate("player") {
+                launchSingleTop = true
+            }
+            intent.removeExtra("NAVIGATE_TO")
+        }
     }
 
     Scaffold(
