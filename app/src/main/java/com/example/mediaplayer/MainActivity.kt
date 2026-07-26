@@ -1,6 +1,7 @@
 package com.example.mediaplayer
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -9,6 +10,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -45,6 +47,11 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+    }
 }
 
 @Composable
@@ -57,6 +64,20 @@ fun MainScreen() {
 
     val isBackgroundPlayEnabled by viewModel.isBackgroundPlayEnabled.collectAsState()
     val player by viewModel.player.collectAsState()
+
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.addObserver(LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                val intent = (context as? MainActivity)?.intent
+                if (intent?.getStringExtra("NAVIGATE_TO") == "player") {
+                    navController.navigate("player") {
+                        launchSingleTop = true
+                    }
+                    intent.removeExtra("NAVIGATE_TO")
+                }
+            }
+        })
+    }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -154,31 +175,37 @@ fun MainScreen() {
             NavHost(
                 navController = navController,
                 startDestination = "home",
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.fillMaxSize()
             ) {
                 composable("home") {
-                    HomeScreen(
-                        viewModel = viewModel,
-                        onMediaClick = { mediaFile, playlist ->
-                            viewModel.playMedia(mediaFile, playlist)
-                            navController.navigate("player")
-                        }
-                    )
+                    Box(Modifier.padding(innerPadding)) {
+                        HomeScreen(
+                            viewModel = viewModel,
+                            onMediaClick = { mediaFile, playlist ->
+                                viewModel.playMedia(mediaFile, playlist)
+                                navController.navigate("player")
+                            }
+                        )
+                    }
                 }
                 composable("list") {
-                    MediaListScreen(
-                        viewModel = viewModel,
-                        onMediaClick = { mediaFile, playlist ->
-                            viewModel.playMedia(mediaFile, playlist)
-                            navController.navigate("player")
-                        },
-                        onAlbumClick = { albumId ->
-                            navController.navigate("album_detail/$albumId")
-                        }
-                    )
+                    Box(Modifier.padding(innerPadding)) {
+                        MediaListScreen(
+                            viewModel = viewModel,
+                            onMediaClick = { mediaFile, playlist ->
+                                viewModel.playMedia(mediaFile, playlist)
+                                navController.navigate("player")
+                            },
+                            onAlbumClick = { albumId ->
+                                navController.navigate("album_detail/$albumId")
+                            }
+                        )
+                    }
                 }
                 composable("settings") {
-                    SettingsScreen(viewModel = viewModel)
+                    Box(Modifier.padding(innerPadding)) {
+                        SettingsScreen(viewModel = viewModel)
+                    }
                 }
                 composable("player") {
                     PlayerScreen(
@@ -191,15 +218,17 @@ fun MainScreen() {
                     arguments = listOf(navArgument("albumId") { type = NavType.LongType })
                 ) { backStackEntry ->
                     val albumId = backStackEntry.arguments?.getLong("albumId") ?: 0L
-                    AlbumDetailScreen(
-                        viewModel = viewModel,
-                        albumId = albumId,
-                        onBack = { navController.popBackStack() },
-                        onMediaClick = { mediaFile, playlist ->
-                            viewModel.playMedia(mediaFile, playlist)
-                            navController.navigate("player")
-                        }
-                    )
+                    Box(Modifier.padding(innerPadding)) {
+                        AlbumDetailScreen(
+                            viewModel = viewModel,
+                            albumId = albumId,
+                            onBack = { navController.popBackStack() },
+                            onMediaClick = { mediaFile, playlist ->
+                                viewModel.playMedia(mediaFile, playlist)
+                                navController.navigate("player")
+                            }
+                        )
+                    }
                 }
             }
         }

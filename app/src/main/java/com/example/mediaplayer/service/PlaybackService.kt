@@ -1,5 +1,6 @@
 package com.example.mediaplayer.service
 
+import android.app.PendingIntent
 import android.content.Intent
 import androidx.annotation.OptIn
 import androidx.media3.common.Player
@@ -43,8 +44,19 @@ class PlaybackService : MediaSessionService() {
             .setSeekBackIncrementMs(10_000)
             .setSeekForwardIncrementMs(10_000)
             .build()
+        val intent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+            putExtra("NAVIGATE_TO", "player")
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
         mediaSession = MediaSession.Builder(this, player)
             .setCallback(callback)
+            .setSessionActivity(pendingIntent)
             .build()
     }
 

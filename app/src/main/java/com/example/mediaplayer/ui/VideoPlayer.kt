@@ -16,8 +16,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -113,8 +115,10 @@ fun VideoPlayerContent(
             insetsController.systemBarsBehavior =
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             insetsController.hide(WindowInsetsCompat.Type.systemBars())
+            window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
         } else {
             insetsController.show(WindowInsetsCompat.Type.systemBars())
+            window.clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
         }
     }
 
@@ -250,6 +254,7 @@ fun VideoPlayerContent(
                                     listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent)
                                 )
                             )
+                            .statusBarsPadding()
                             .padding(horizontal = 4.dp, vertical = 4.dp)
                     ) {
                         IconButton(onClick = onBack) {
@@ -340,6 +345,7 @@ fun VideoPlayerContent(
                                     listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f))
                                 )
                             )
+                            .navigationBarsPadding()
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         SeekBarRow(
