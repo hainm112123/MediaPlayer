@@ -46,15 +46,22 @@ class MainActivity : ComponentActivity() {
     private val viewModel: MediaViewModel by viewModels()
     private var isInPipMode = mutableStateOf(false)
     private var currentRoute: String? = null
+    private var intentTrigger = mutableIntStateOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        if (intent?.hasExtra("NAVIGATE_TO") == true) {
+            intentTrigger.intValue++
+        }
+
         setContent {
             MediaPlayerTheme {
                 MainScreen(
                     viewModel = viewModel,
                     isInPipMode = isInPipMode.value,
+                    intentTrigger = intentTrigger.intValue,
                     onRouteChanged = { currentRoute = it }
                 )
             }
@@ -64,6 +71,9 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        if (intent.hasExtra("NAVIGATE_TO")) {
+            intentTrigger.intValue++
+        }
     }
 
     override fun onUserLeaveHint() {
@@ -98,6 +108,7 @@ class MainActivity : ComponentActivity() {
 fun MainScreen(
     viewModel: MediaViewModel,
     isInPipMode: Boolean,
+    intentTrigger: Int,
     onRouteChanged: (String?) -> Unit
 ) {
     val navController = rememberNavController()
@@ -148,7 +159,7 @@ fun MainScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    LaunchedEffect(currentDestination) {
+    LaunchedEffect(currentDestination, intentTrigger) {
         onRouteChanged(currentDestination?.route)
         
         val intent = (context as? MainActivity)?.intent
