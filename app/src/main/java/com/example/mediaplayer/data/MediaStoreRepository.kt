@@ -2,11 +2,54 @@ package com.example.mediaplayer.data
 
 import android.content.ContentResolver
 import android.content.ContentUris
+import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 
 class MediaStoreRepository(private val contentResolver: ContentResolver) {
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun observeAudioFiles(): Flow<List<MediaFile>> = callbackFlow {
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                trySend(Unit)
+            }
+        }
+        contentResolver.registerContentObserver(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, true, observer)
+        
+        trySend(Unit)
+
+        awaitClose {
+            contentResolver.unregisterContentObserver(observer)
+        }
+    }.onStart { emit(Unit) }
+    .mapLatest { getAudioFiles() }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun observeVideoFiles(): Flow<List<MediaFile>> = callbackFlow {
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                trySend(Unit)
+            }
+        }
+        contentResolver.registerContentObserver(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, true, observer)
+        
+        trySend(Unit)
+
+        awaitClose {
+            contentResolver.unregisterContentObserver(observer)
+        }
+    }.onStart { emit(Unit) }
+    .mapLatest { getVideoFiles() }
 
     suspend fun getAudioFiles(): List<MediaFile> = withContext(Dispatchers.IO) {
         val files = mutableListOf<MediaFile>()

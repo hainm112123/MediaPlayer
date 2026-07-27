@@ -106,15 +106,20 @@ class MediaViewModel(application: Application) : AndroidViewModel(application) {
                 })
             }
         }, MoreExecutors.directExecutor())
-        loadMedia()
-    }
-
-    fun loadMedia() {
+        
         viewModelScope.launch {
-            _audioFiles.value = mediaRepository.getAudioFiles()
-            _videoFiles.value = mediaRepository.getVideoFiles()
+            mediaRepository.observeAudioFiles().collect {
+                _audioFiles.value = it
+            }
+        }
+        viewModelScope.launch {
+            mediaRepository.observeVideoFiles().collect {
+                _videoFiles.value = it
+            }
         }
     }
+
+
 
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
